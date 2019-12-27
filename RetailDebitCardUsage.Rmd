@@ -1,0 +1,139 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(fpp)
+library(fpp2)
+```
+
+*** Retail debit card usage in iceland ***
+
+```{r}
+tranformdebit=debitcards
+
+```
+
+*** Time Series Data ***
+
+
+```{r}
+class(tranformdebit)
+```
+Exploring the data
+*** plotting the data ***
+
+```{r}
+autoplot(transformdebit) + ggtitle("Retail debit card usage in Iceland") + xlab("Year") + ylab("million ISK")
+
+```
+
+
+
+
+```{r}
+ggsubseriesplot(transformdebit) + ylab("million ISK") + ggtitle("Seasonal subseries plot:Retail debit card usage in Iceland ")
+```
+
+Autocorrelation
+```{r}
+ggAcf(transformdebit)
+```
+
+
+
+*** Decomposing the data to understand trend and seasonality ***
+
+```{r}
+decompose<-stl(transformdebit,s.window = 5)#(check)
+plot(decompose)
+```
+```{r}
+autoplot(transformdebit)+
+  autolayer(decompose$time.series[,2],series="Trend")+
+   ggtitle("Retail debit card usage in Iceland") + 
+  xlab("Year") + ylab("million ISK")+
+  guides(colours=guide_legend(title='Trend'))
+```
+
+```{r}
+#seasonal component over time
+monthplot(decompose$time.series[,"seasonal"], main="", ylab="Seasonal")
+```
+
+
+
+
+
+
+*** Splitting the data into training and test ***
+
+```{r}
+
+train<- window(transformdebit,start=2000,end=c(2008,12),frequency=12)
+test<-window(transformdebit,start=c(2009,1),end=c(2012,12),frequency=12)
+
+```
+
+*** Forecasting Retail debit card usage using Average method ***
+
+```{r}
+fit_mean<-meanf(train,h=48)
+autoplot(window(train,start=2000,end=))+autolayer(fit_mean,series="mean",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_mean,test)
+
+```
+
+*** Forecasting Retail debit card usage using Naive method (since it is widely used for economic and finanicial time series)***
+
+```{r}
+fit_naive<-naive(train,h=48)
+autoplot(window(train,start=2000,end=))+autolayer(fit_naive,series="naive",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_naive,test)
+```
+*** Forecasting Retail debit card usage using Seasonal Naive method, since there is seasonality in the data ***
+
+```{r}
+fit_snaive<-snaive(train,h=48)
+autoplot(window(train,start=2000))+autolayer(fit_snaive,series="snaive",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_snaive,test)
+```
+*** Forecasting Retail debit card usage using drift method ***
+
+```{r}
+fit_drift<-rwf(train,h=12,drift=TRUE)
+autoplot(window(train,start=2000))+autolayer(fit_drift,series="Drift",PI=FALSE)+xlab("Years")+ylab(" Amount accumalted by Debit Card in millions ISK")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_drift,test)
+```
+*** Forecasting Retail debit card usage using Holt winter's additive method ***
+
+```{r}
+fit_hwa<-hw(train,h=48,seasonal='additive')
+autoplot(window(train,start=2000,end=))+autolayer(fit_hwa,series="HW Additive Forecasting",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_hwa,test)
+
+```
+*** Forecasting Retail debit card usage using Holt winter's multiplicative method ***
+
+```{r}
+fit_hwa<-hw(train,h=48,seasonal='multiplicative')
+autoplot(window(train,start=2000,end=))+autolayer(fit_hwa,series="HW Multiplicative Forecasting",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(fit_hwa,test)
+
+```
+
+*** Forecasting Retail debit card usage using Arima method ***
+
+```{r}
+fit_arima<-auto.arima(train)
+forecast_arima<-forecast(fit_arima,h=12)
+autoplot(window(train,start=2000,end=))+autolayer(forecast_arima,series="Arima Forecasting",PI=FALSE)+xlab("Years")+ylab("Usage")+ggtitle("Retail debit card usage in Iceland")+guides(colour=guide_legend(title = "Forecast"))
+accuracy(forecast_arima,test)
+
+```
+
+
+
